@@ -1,0 +1,207 @@
+{
+  "info": {
+    "name": "Prachay Capital - Expense Voucher Management API",
+    "_postman_id": "9a38f322-77eb-4856-9b5a-7e6beec68a83",
+    "description": "RESTful API collection for Expense Voucher Management System supporting Employee, Director, and Accounts roles.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login - Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"employee1@abc.com\",\n  \"password\": \"Employee@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Director",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"director@abc.com\",\n  \"password\": \"Director@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Me Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vouchers",
+      "item": [
+        {
+          "name": "Create Draft Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department\": \"Engineering\",\n  \"expenseTitle\": \"AWS Cloud Infrastructure Annual License\",\n  \"expenseDate\": \"2026-10-10\",\n  \"expenseCategory\": \"Software\",\n  \"expenseDescription\": \"Compute cluster resources for engineering services\",\n  \"amount\": 24500.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vouchers",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers"]
+            }
+          }
+        },
+        {
+          "name": "List Vouchers (Filtered)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers?status=PENDING_APPROVAL&limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers"],
+              "query": [
+                { "key": "status", "value": "PENDING_APPROVAL" },
+                { "key": "limit", "value": "10" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Voucher By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/{{voucherId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "{{voucherId}}"]
+            }
+          }
+        },
+        {
+          "name": "Submit Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/{{voucherId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "{{voucherId}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Approve Voucher (Director)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"directorSignaturePath\": \"/uploads/sample-director-signature.png\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/{{voucherId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "{{voucherId}}", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Reject Voucher (Director)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Original itemized receipt missing. Please upload GST invoice copy.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/{{voucherId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "{{voucherId}}", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "voucherId",
+      "value": ""
+    }
+  ]
+}

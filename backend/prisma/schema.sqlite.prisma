@@ -1,0 +1,83 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           String    // EMPLOYEE, DIRECTOR, ACCOUNTS
+  employeeCode   String?
+  department     String
+  signaturePath  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  vouchersCreated   Voucher[]              @relation("EmployeeVouchers")
+  vouchersApproved  Voucher[]              @relation("DirectorVouchers")
+  statusHistory     VoucherStatusHistory[] @relation("ChangedByUser")
+
+  @@map("users")
+}
+
+model Voucher {
+  id                    String    @id @default(cuid())
+  voucherNumber         String    @unique
+  voucherDate           DateTime  @default(now())
+  expenseDate           DateTime
+  department            String
+  expenseTitle          String
+  expenseCategory       String
+  expenseDescription   String
+  amount                Float
+  employeeId            String
+  employeeName          String
+  employeeCode          String?
+  employeeSignaturePath String?
+  status                String    @default("DRAFT")
+  directorId            String?
+  directorSignaturePath String?
+  approvalDate          DateTime?
+  rejectionReason       String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  employee       User                   @relation("EmployeeVouchers", fields: [employeeId], references: [id])
+  director       User?                  @relation("DirectorVouchers", fields: [directorId], references: [id])
+  statusHistory  VoucherStatusHistory[]
+
+  @@index([status])
+  @@index([employeeId])
+  @@index([expenseDate])
+  @@index([voucherNumber])
+  @@map("vouchers")
+}
+
+model VoucherStatusHistory {
+  id          String   @id @default(cuid())
+  voucherId   String
+  fromStatus  String
+  toStatus    String
+  changedBy   String
+  remarks     String?
+  createdAt   DateTime @default(now())
+
+  voucher   Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user      User    @relation("ChangedByUser", fields: [changedBy], references: [id])
+
+  @@index([voucherId])
+  @@map("voucher_status_history")
+}
+
+model VoucherCounter {
+  year      Int @id
+  lastCount Int @default(0)
+
+  @@map("voucher_counters")
+}

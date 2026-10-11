@@ -1,0 +1,108 @@
+// PostgreSQL Prisma Schema for Production / Docker Deployment
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  EMPLOYEE
+  DIRECTOR
+  ACCOUNTS
+}
+
+enum ExpenseCategory {
+  Travel
+  Food
+  Accommodation
+  OfficeSupplies @map("Office Supplies")
+  Software
+  Training
+  Other
+}
+
+enum VoucherStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String    @id @default(uuid())
+  name           String    @db.VarChar(255)
+  email          String    @unique @db.VarChar(255)
+  passwordHash   String    @map("password_hash") @db.VarChar(255)
+  role           Role
+  employeeCode   String?   @map("employee_code") @db.VarChar(50)
+  department     String    @db.VarChar(100)
+  signaturePath  String?   @map("signature_path") @db.VarChar(500)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  vouchersCreated   Voucher[]              @relation("EmployeeVouchers")
+  vouchersApproved  Voucher[]              @relation("DirectorVouchers")
+  statusHistory     VoucherStatusHistory[] @relation("ChangedByUser")
+
+  @@map("users")
+}
+
+model Voucher {
+  id                    String          @id @default(uuid())
+  voucherNumber         String          @unique @map("voucher_number") @db.VarChar(50)
+  voucherDate           DateTime        @default(now()) @map("voucher_date") @db.Date
+  expenseDate           DateTime        @map("expense_date") @db.Date
+  department            String          @db.VarChar(100)
+  expenseTitle          String          @map("expense_title") @db.VarChar(255)
+  expenseCategory       ExpenseCategory @map("expense_category")
+  expenseDescription   String          @map("expense_description") @db.Text
+  amount                Decimal         @db.Decimal(12, 2)
+  employeeId            String          @map("employee_id")
+  employeeName          String          @map("employee_name") @db.VarChar(255)
+  employeeCode          String?         @map("employee_code") @db.VarChar(50)
+  employeeSignaturePath String?         @map("employee_signature_path") @db.VarChar(500)
+  status                VoucherStatus   @default(DRAFT)
+  directorId            String?         @map("director_id")
+  directorSignaturePath String?         @map("director_signature_path") @db.VarChar(500)
+  approvalDate          DateTime?       @map("approval_date")
+  rejectionReason       String?         @map("rejection_reason") @db.Text
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  employee       User                   @relation("EmployeeVouchers", fields: [employeeId], references: [id])
+  director       User?                  @relation("DirectorVouchers", fields: [directorId], references: [id])
+  statusHistory  VoucherStatusHistory[]
+
+  @@index([status])
+  @@index([employeeId])
+  @@index([expenseDate])
+  @@index([voucherNumber])
+  @@map("vouchers")
+}
+
+model VoucherStatusHistory {
+  id          String        @id @default(uuid())
+  voucherId   String        @map("voucher_id")
+  fromStatus  VoucherStatus @map("from_status")
+  toStatus    VoucherStatus @map("to_status")
+  changedBy   String        @map("changed_by")
+  remarks     String?       @db.Text
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  voucher   Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user      User    @relation("ChangedByUser", fields: [changedBy], references: [id])
+
+  @@index([voucherId])
+  @@map("voucher_status_history")
+}
+
+model VoucherCounter {
+  year      Int @id
+  lastCount Int @default(0) @map("last_count")
+
+  @@map("voucher_counters")
+}

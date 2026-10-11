@@ -1,0 +1,79 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           String    // EMPLOYEE, DIRECTOR, ACCOUNTS
+  employeeCode   String?
+  department     String
+  signaturePath  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  vouchersCreated   Voucher[]              @relation("EmployeeVouchers")
+  vouchersApproved  Voucher[]              @relation("DirectorVouchers")
+  statusHistory     VoucherStatusHistory[] @relation("ChangedByUser")
+
+  @@map("users")
+}
+
+model Voucher {
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  voucherNumber         String    @unique
+  voucherDate           DateTime  @default(now())
+  expenseDate           DateTime
+  department            String
+  expenseTitle          String
+  expenseCategory       String    // Travel, Food, Accommodation, Office Supplies, Software, Training, Other
+  expenseDescription   String
+  amount                Float
+  employeeId            String    @db.ObjectId
+  employeeName          String
+  employeeCode          String?
+  employeeSignaturePath String?
+  status                String    @default("DRAFT") // DRAFT, SUBMITTED, PENDING_APPROVAL, APPROVED, REJECTED
+  directorId            String?   @db.ObjectId
+  directorSignaturePath String?
+  approvalDate          DateTime?
+  rejectionReason       String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  employee       User                   @relation("EmployeeVouchers", fields: [employeeId], references: [id])
+  director       User?                  @relation("DirectorVouchers", fields: [directorId], references: [id])
+  statusHistory  VoucherStatusHistory[]
+
+  @@map("vouchers")
+}
+
+model VoucherStatusHistory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  voucherId   String   @db.ObjectId
+  fromStatus  String
+  toStatus    String
+  changedBy   String   @db.ObjectId
+  remarks     String?
+  createdAt   DateTime @default(now())
+
+  voucher   Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user      User    @relation("ChangedByUser", fields: [changedBy], references: [id])
+
+  @@map("voucher_status_history")
+}
+
+model VoucherCounter {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  year      Int    @unique
+  lastCount Int    @default(0)
+
+  @@map("voucher_counters")
+}
